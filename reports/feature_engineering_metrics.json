@@ -1,0 +1,31 @@
+{
+  "total_records": 6362620,
+  "total_fraud": 8213,
+  "elapsed_seconds": 44.46,
+  "throughput_rows_sec": 143123.6,
+  "output_size_mb": 470.5,
+  "partitions": [
+    {
+      "partition": "train",
+      "row_count": 6061807,
+      "fraud_count": 5561.0,
+      "min_step": 1,
+      "max_step": 500
+    },
+    {
+      "partition": "val",
+      "row_count": 209984,
+      "fraud_count": 1286.0,
+      "min_step": 501,
+      "max_step": 620
+    },
+    {
+      "partition": "test",
+      "row_count": 90829,
+      "fraud_count": 1366.0,
+      "min_step": 621,
+      "max_step": 743
+    }
+  ],
+  "total_pipeline_time_seconds": 66.96
+}
