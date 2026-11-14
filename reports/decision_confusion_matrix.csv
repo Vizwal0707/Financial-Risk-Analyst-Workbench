@@ -1,0 +1,5 @@
+actual_class,decision_approve,decision_review,decision_decline,total_transactions,amount_approved_usd,amount_reviewed_usd,amount_declined_usd,total_amount_usd
+Legitimate (isFraud=0),89440,8,15,89463,14418992368.08,281310.19,1502956.46,14420776634.73
+Fraud (isFraud=1),1,44,1321,1366,399045.08,924115.16,2339420126.99,2340743287.23
+Total,89441,52,1336,90829,14419391413.16,1205425.35,2340923083.45,16761519921.96
+

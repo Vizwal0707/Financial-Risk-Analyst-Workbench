@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "total_records": 6362620,
+  "total_nulls": 0,
+  "null_counts": {
+    "step": 0,
+    "type": 0,
+    "amount": 0,
+    "nameOrig": 0,
+    "oldbalanceOrg": 0,
+    "newbalanceOrig": 0,
+    "nameDest": 0,
+    "oldbalanceDest": 0,
+    "newbalanceDest": 0,
+    "isFraud": 0,
+    "isFlaggedFraud": 0
+  },
+  "duplicate_rows": 0,
+  "step_range": {
+    "min": 1,
+    "max": 743
+  },
+  "steps_out_of_bounds": 0,
+  "negative_values": {
+    "amount": 0,
+    "oldbalanceOrg": 0,
+    "oldbalanceDest": 0
+  },
+  "type_counts": {
+    "CASH_OUT": 2237500,
+    "PAYMENT": 2151495,
+    "CASH_IN": 1399284,
+    "TRANSFER": 532909,
+    "DEBIT": 41432
+  },
+  "class_imbalance": {
+    "legitimate_count": 6354407,
+    "fraud_count": 8213,
+    "fraud_rate_pct": 0.1291,
+    "imbalance_ratio": 773.7
+  },
+  "financial_exposure": {
+    "total_nominal_volume": 1144392944759.77,
+    "total_fraud_volume": 12056415427.84,
+    "fraud_volume_pct": 1.0535
+  },
+  "fraud_by_corridor": {
+    "CASH_OUT": {
+      "total": 2237500,
+      "fraud_count": 4116,
+      "fraud_rate_pct": 0.184
+    },
+    "PAYMENT": {
+      "total": 2151495,
+      "fraud_count": 0,
+      "fraud_rate_pct": 0.0
+    },
+    "CASH_IN": {
+      "total": 1399284,
+      "fraud_count": 0,
+      "fraud_rate_pct": 0.0
+    },
+    "TRANSFER": {
+      "total": 532909,
+      "fraud_count": 4097,
+      "fraud_rate_pct": 0.7688
+    },
+    "DEBIT": {
+      "total": 41432,
+      "fraud_count": 0,
+      "fraud_rate_pct": 0.0
+    }
+  },
+  "structural_anomalies": {
+    "orig_zero_balance_count": 2102449,
+    "dest_zero_balance_count": 2704388
+  }
+}

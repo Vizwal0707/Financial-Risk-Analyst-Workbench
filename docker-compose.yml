@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  fraud-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: financial-fraud-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://fraud_user:fraud_secret@fraud-db:5432/fraud_intelligence
+      - CORS_ALLOWED_ORIGINS=http://localhost:8501,http://fraud-dashboard:8501
+      - LOG_LEVEL=INFO
+      - MPLCONFIGDIR=/tmp/matplotlib
+    depends_on:
+      fraud-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - fraud-net
+
+  fraud-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: financial-fraud-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - FRAUD_API_URL=http://fraud-api:8000
+      - FRAUD_API_TIMEOUT=5.0
+      - MPLCONFIGDIR=/tmp/matplotlib
+    depends_on:
+      fraud-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - fraud-net
+
+  fraud-db:
+    image: postgres:16-alpine
+    container_name: financial-fraud-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=fraud_user
+      - POSTGRES_PASSWORD=fraud_secret
+      - POSTGRES_DB=fraud_intelligence
+    # Security hardening: internal database port only exposed inside private network, not published to host
+    expose:
+      - "5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/001_initial_audit_schema.sql:/docker-entrypoint-initdb.d/001_initial_audit_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud_user -d fraud_intelligence"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - fraud-net
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  fraud-net:
+    driver: bridge

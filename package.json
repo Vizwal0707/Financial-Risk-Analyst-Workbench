@@ -1,0 +1,17 @@
+{
+  "name": "financial-fraud-risk-platform",
+  "version": "1.0.0",
+  "description": "Financial Fraud Detection & Risk Intelligence Platform (FastAPI backend + Streamlit frontend)",
+  "private": true,
+  "scripts": {
+    "build": "./.venv/bin/python scripts/build.py",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "start": "make api",
+    "start:dashboard": "make dashboard",
+    "test": "MPLCONFIGDIR=/tmp/matplotlib PYTHONPATH=. ./.venv/bin/pytest tests/ -v",
+    "lint": "make lint",
+    "features": "make features"
+  }
+}

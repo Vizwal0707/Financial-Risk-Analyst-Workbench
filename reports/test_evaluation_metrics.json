@@ -1,0 +1,141 @@
+{
+  "test_samples": 90829,
+  "test_frauds": 1366,
+  "test_fraud_rate": 0.015039249578878993,
+  "test_metrics": {
+    "XGBoost_Uncalibrated": {
+      "pr_auc": 0.9987910577474723,
+      "roc_auc": 0.9999818994835773,
+      "brier_score": 0.00028938866941496564,
+      "threshold": 0.5,
+      "precision": 0.9820143884892086,
+      "recall": 0.9992679355783309,
+      "f1_score": 0.9905660377358491,
+      "specificity": 0.9997205548662575,
+      "false_positive_rate": 0.000279445133742441,
+      "true_positives": 1365,
+      "false_positives": 25,
+      "true_negatives": 89438,
+      "false_negatives": 1,
+      "total_samples": 90829,
+      "total_fraud_samples": 1366
+    },
+    "XGBoost_Calibrated": {
+      "pr_auc": 0.9978706242792956,
+      "roc_auc": 0.9996179170825816,
+      "brier_score": 0.0002699157631084557,
+      "threshold": 0.5,
+      "precision": 0.9840579710144928,
+      "recall": 0.9941434846266471,
+      "f1_score": 0.989075018208303,
+      "specificity": 0.9997540882823066,
+      "false_positive_rate": 0.0002459117176933481,
+      "true_positives": 1358,
+      "false_positives": 22,
+      "true_negatives": 89441,
+      "false_negatives": 8,
+      "total_samples": 90829,
+      "total_fraud_samples": 1366
+    },
+    "DeepAutoencoder": {
+      "pr_auc": 0.17354654419898435,
+      "roc_auc": 0.7323573726357406,
+      "brier_score": 0.3760075193479192,
+      "threshold": 0.5,
+      "precision": 0.019122078345142113,
+      "recall": 0.8594436310395315,
+      "f1_score": 0.0374117684549322,
+      "specificity": 0.3268613840358584,
+      "false_positive_rate": 0.6731386159641416,
+      "true_positives": 1174,
+      "false_positives": 60221,
+      "true_negatives": 29242,
+      "false_negatives": 192,
+      "total_samples": 90829,
+      "total_fraud_samples": 1366
+    },
+    "Hybrid_Fusion": {
+      "pr_auc": 0.9984442605571665,
+      "roc_auc": 0.9999747967492847,
+      "brier_score": 0.001209659133528509,
+      "threshold": 0.5,
+      "precision": 0.9840579710144928,
+      "recall": 0.9941434846266471,
+      "f1_score": 0.989075018208303,
+      "specificity": 0.9997540882823066,
+      "false_positive_rate": 0.0002459117176933481,
+      "true_positives": 1358,
+      "false_positives": 22,
+      "true_negatives": 89441,
+      "false_negatives": 8,
+      "total_samples": 90829,
+      "total_fraud_samples": 1366
+    }
+  },
+  "calibration": {
+    "uncalibrated_ece": 0.0020454028087255587,
+    "calibrated_ece": 0.00014513441789769117,
+    "uncalibrated_brier": 0.00028938866941496564,
+    "calibrated_brier": 0.0002699157631084557
+  },
+  "operational_capacity": {
+    "k_512": {
+      "k": 512,
+      "true_positives_at_k": 512,
+      "precision_at_k": 1.0,
+      "recall_at_k": 0.37481698389458273,
+      "alert_rate": 0.005636966167193298,
+      "captured_fraud_value": 1982533363.01,
+      "total_fraud_value": 2340743287.23,
+      "fraud_value_captured_rate": 0.8469674456937565,
+      "unintercepted_fraud_value": 358209924.22
+    },
+    "k_1281": {
+      "k": 1281,
+      "true_positives_at_k": 1273,
+      "precision_at_k": 0.9937548790007806,
+      "recall_at_k": 0.931918008784773,
+      "alert_rate": 0.014103425117528543,
+      "captured_fraud_value": 2336540003.8199997,
+      "total_fraud_value": 2340743287.23,
+      "fraud_value_captured_rate": 0.9982042954334499,
+      "unintercepted_fraud_value": 4203283.410000324
+    },
+    "k_2562": {
+      "k": 2562,
+      "true_positives_at_k": 1366,
+      "precision_at_k": 0.5331772053083529,
+      "recall_at_k": 1.0,
+      "alert_rate": 0.028206850235057087,
+      "captured_fraud_value": 2340743287.23,
+      "total_fraud_value": 2340743287.23,
+      "fraud_value_captured_rate": 1.0,
+      "unintercepted_fraud_value": 0.0
+    },
+    "k_5125": {
+      "k": 5125,
+      "true_positives_at_k": 1366,
+      "precision_at_k": 0.2665365853658537,
+      "recall_at_k": 1.0,
+      "alert_rate": 0.05642471016965947,
+      "captured_fraud_value": 2340743287.23,
+      "total_fraud_value": 2340743287.23,
+      "fraud_value_captured_rate": 1.0,
+      "unintercepted_fraud_value": 0.0
+    }
+  },
+  "financial_policy_impact": {
+    "tau_low": 0.1,
+    "tau_high": 0.75,
+    "total_fraud_volume": 2340743287.23,
+    "saved_fraud_amount": 2340344242.1499996,
+    "uncaught_fraud_amount": 399045.08,
+    "fp_friction_cost": 1500.0,
+    "review_cost": 1300.0,
+    "net_financial_savings": 2340341442.15,
+    "roi_pct": 99.98283258646123,
+    "approved": 89441,
+    "reviewed": 52,
+    "declined": 1336
+  }
+}

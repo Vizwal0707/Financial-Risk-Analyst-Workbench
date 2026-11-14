@@ -1,0 +1,14 @@
+{
+  "primary_score": "Hybrid_Fusion",
+  "tau_low": 0.1,
+  "tau_high": 0.75,
+  "best_alpha": 0.95,
+  "max_daily_capacity": 500,
+  "validation_hours": 120.0,
+  "validation_capacity": 2500,
+  "best_net_savings": 1699991466.33,
+  "roi_percentage": 99.99982352883733,
+  "approval_volume": 208658,
+  "review_volume": 64,
+  "decline_volume": 1262
+}

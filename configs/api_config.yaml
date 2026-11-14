@@ -1,0 +1,22 @@
+api:
+  title: "Financial Fraud Detection & Risk Intelligence API"
+  version: "1.0.0"
+  description: "High-throughput inference, scoring, and explainability REST API for payment transaction monitoring."
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  reload: false
+  
+  sla:
+    p95_latency_ms: 50.0
+    timeout_seconds: 5.0
+
+  batch_limits:
+    max_batch_size: 500
+    default_batch_size: 50
+
+  cors:
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST"]
+    allow_headers: ["*"]
+
