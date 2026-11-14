@@ -1,0 +1,57 @@
+dataset:
+  name: "PaySim Synthetic Financial Fraud Benchmark"
+  description: "Synthetic mobile money transaction dataset generated via agent-based simulation (Lopez-Rojas et al.)."
+  disclaimer: "Synthetic benchmark dataset. Does not represent real banking transactions or proprietary JPMorgan Chase customer records."
+  total_expected_records: 6362620
+  raw_file_name: "paysim.csv"
+  processed_file_name: "paysim_featurized.parquet"
+  ci_sample_file_name: "paysim_ci_sample.parquet"
+
+paths:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  sample_dir: "data/sample"
+  duckdb_path: "data/fraud_analytics.duckdb"
+
+temporal_split:
+  unit: "step"
+  step_duration_hours: 1
+  total_steps: 743
+  horizon_limitation_note: "743 steps corresponds to exactly 30 days and 23 hours (all 743 discrete hours populated). Longer-term quarterly or annual seasonality cannot be captured."
+  reconciliation_note: "Original literature often cites 744 hours (31 * 24), but PaySim simulation logs terminate at step 743 (743 distinct simulation hours)."
+  train:
+    min_step: 1
+    max_step: 500
+    description: "First ~21 days (steps 1 to 500; 67.3% of timeline) for training"
+  validation:
+    min_step: 501
+    max_step: 620
+    description: "Days ~21 to ~26 (steps 501 to 620; 16.1% of timeline) for tuning, threshold optimization, and probability calibration"
+  test:
+    min_step: 621
+    max_step: 743
+    description: "Final ~5 days (steps 621 to 743; 16.6% of timeline) held out for frozen out-of-time evaluation"
+
+columns:
+  id_columns:
+    - "nameOrig"
+    - "nameDest"
+  temporal_column: "step"
+  categorical_columns:
+    - "type"
+  numerical_columns:
+    - "amount"
+    - "oldbalanceOrg"
+    - "newbalanceOrig"
+    - "oldbalanceDest"
+    - "newbalanceDest"
+  target_column: "isFraud"
+  rule_heuristic_column: "isFlaggedFraud"
+
+valid_types:
+  - "CASH_IN"
+  - "CASH_OUT"
+  - "DEBIT"
+  - "PAYMENT"
+  - "TRANSFER"
+

@@ -1,0 +1,38 @@
+policy:
+  version: "1.0.0"
+  disclaimer: "Risk policy thresholds represent simulated quantitative rules and do not constitute statutory bank authorization decisions."
+  
+  hybrid_fusion:
+    alpha: 0.80  # Default weighting: alpha * P_XGB + (1 - alpha) * S_AE
+    alpha_grid: [0.50, 0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00]
+
+  decision_thresholds:
+    tau_low: 0.35    # Below tau_low: APPROVE (Straight-Through Processing)
+    tau_high: 0.75   # At or above tau_high: DECLINE (Block / Step-up MFA)
+    # Between tau_low and tau_high: REVIEW (Human Analyst Queue)
+
+  capacity_constraints:
+    max_daily_review_capacity: 500  # Maximum transactions investigators can review per 24 hours
+    hard_capacity_enforcement: true
+
+  cost_assumptions:
+    false_negative_multiplier: 1.0  # Loss = 1.0 * Transaction Amount (unrecovered loss)
+    false_positive_cost: 100.0      # Estimated churn / customer friction cost ($)
+    investigation_cost: 25.0        # Human analyst operational review cost ($)
+
+  sensitivity_analysis:
+    false_positive_costs: [20.0, 50.0, 100.0, 200.0, 500.0]
+    investigation_costs: [10.0, 25.0, 50.0, 75.0, 100.0]
+    daily_capacities: [100, 250, 500, 1000]
+
+  actions:
+    approve:
+      label: "APPROVE"
+      description: "Straight-Through Processing. Low risk transaction."
+    review:
+      label: "REVIEW"
+      description: "Routed to Level-1 Fraud Operations Queue with SHAP explanation card."
+    decline:
+      label: "DECLINE"
+      description: "Immediate transaction decline, step-up MFA, or automated SAR flag."
+

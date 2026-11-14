@@ -1,0 +1,50 @@
+feature_pipeline:
+  version: "1.0.0"
+  random_seed: 42
+  
+  # Crucial: Strictly excluded from inference feature set to prevent look-ahead & circular leakage
+  forbidden_columns:
+    - "newbalanceOrig"   # Post-transaction balance (not available at authorization time)
+    - "newbalanceDest"   # Post-transaction balance (not available at authorization time)
+    - "isFlaggedFraud"   # Heuristic rule flag (prevents circular target leakage)
+    - "isFraud"          # Target label (never in feature vector)
+    - "nameOrig"         # Raw entity string (used only for grouping/windows)
+    - "nameDest"         # Raw entity string (used only for grouping/windows)
+
+  numerical_features:
+    - "amount"
+    - "amount_log"
+    - "oldbalanceOrg"
+    - "oldbalanceDest"
+    - "balance_orig_drain_ratio"
+    - "is_orig_zero_balance"
+    - "is_dest_zero_balance"
+    - "orig_balance_coverage"
+    - "dest_balance_amount_ratio"
+    - "hour_of_day"
+    - "hour_sin"
+    - "hour_cos"
+    - "day_of_month"
+    - "is_merchant_dest"
+    - "orig_tx_count_1h"
+    - "orig_tx_count_24h"
+    - "orig_tx_count_72h"
+    - "orig_amount_sum_24h"
+    - "orig_amount_mean_24h"
+    - "orig_amount_std_24h"
+    - "orig_amount_zscore_24h"
+    - "dest_inflow_count_24h"
+    - "dest_inflow_sum_24h"
+    - "is_first_interaction"
+
+  categorical_features:
+    - "type"
+
+  velocity_windows_hours:
+    - 1
+    - 6
+    - 24
+    - 72
+
+  epsilon: 1.0e-5
+

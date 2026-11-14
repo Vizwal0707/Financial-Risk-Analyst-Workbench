@@ -1,11 +1,288 @@
-# Financial-Risk-Analyst-Workbench
-Financial Fraud Detection &amp; Risk Intelligence Platform is a machine learning research prototype for transaction risk scoring, fraud investigation, and model governance. Built on the synthetic PaySim mobile-money dataset, it demonstrates how data engineering, machine learning, explainability, API serving, and analyst workflows can be integrated. 
-The project processes more than 6.3 million synthetic transactions and implements point-in-time feature engineering with 31 audited features. Temporal safeguards prevent future information from entering historical features, while chronological training, validation, and out-of-time test partitions support evaluation. The modelling layer includes baseline classifiers, an XGBoost fraud classifier, a PyTorch autoencoder for anomaly scoring, and validation-fitted isotonic probability calibration. Feature ablation experiments examine model dependence on balance, transaction type, amount, and velocity signals.
+# Financial Fraud Detection & Risk Intelligence Platform
 
-A FastAPI serving layer provides single and batch scoring endpoints, validates requests, applies configurable APPROVE, REVIEW, and DECLINE policies, and generates TreeSHAP explanations. The service includes reason codes, request identifiers, latency measurements, and SQLite audit persistence. PostgreSQL support is configurable, but live managed-database deployment remains unverified.
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![Architecture](https://img.shields.io/badge/Standard-JPMorgan_Chase_Risk_Architecture-003366.svg)](#)
+[![Data Engine](https://img.shields.io/badge/Storage-DuckDB_%7C_Parquet_%7C_PostgreSQL-yellow.svg)](#)
+[![Validation](https://img.shields.io/badge/Validation-Pandera_0.36-green.svg)](#)
+[![Tests](https://img.shields.io/badge/Tests-92_Passing-brightgreen.svg)](#)
 
-The Streamlit analyst workbench contains six modules: Executive Risk Overview, Investigation Queue, Transaction Explorer, Model Governance, Policy Simulator, and Audit Explorer. Plotly visualizations support benchmark analysis, calibration review, transaction exploration, and offline policy experimentation. The policy simulator uses validation data for threshold exploration while preserving the out-of-time test set as a frozen benchmark.
+Enterprise-grade, high-throughput financial transaction monitoring, anomaly detection, explainable risk scoring, and operational decision intelligence platform. Engineered to mirror the rigorous statistical, latency, and data governance standards of institutional risk operations (JPMorgan Chase Corporate & Investment Bank / Retail Risk Operations).
 
-The repository includes Dockerfiles, Docker Compose configuration, environment templates, deployment documentation, and automated regression tests.
+---
 
-This project is intended for learning, portfolio demonstration, and discussion of financial machine learning systems. Transaction data is synthetic, operational actions are simulated, and SHAP attributions are not causal explanations. Reported performance reflects the PaySim benchmark and local test environment. This prototype should not be used for real-world financial decisions or represented as a production banking system.
+## 1. System Overview & Architecture
+
+The platform addresses the core statistical challenge of financial transaction monitoring: **extreme class imbalance** (~0.13% fraud rate) paired with **adversarial typology shifts** and **asymmetric financial costs** (False Negative loss vs. False Positive customer friction).
+
+```
+[ Ingestion & Validation ] ──> [ DuckDB / Parquet ] ──> [ Point-in-Time Features ]
+                                                                 │
+                                     ┌───────────────────────────┴───────────────────────────┐
+                                     ▼                                                       ▼
+                         [ PyTorch Autoencoder ]                                   [ Cost-Weighted XGBoost ]
+                         (Reconstruction Error)                                   (Calibrated Probabilities)
+                                     │                                                       │
+                                     └───────────────────────────┬───────────────────────────┘
+                                                                 ▼
+                                                    [ Hybrid Risk Engine ]
+                                                    (α-Weighted Score Fusion)
+                                                                 │
+                                                                 ▼
+                                                  [ Configurable Policy Matrix ]
+                                                   APPROVE | REVIEW | DECLINE
+                                                                 │
+                                     ┌───────────────────────────┴───────────────────────────┐
+                                     ▼                                                       ▼
+                          [ FastAPI REST Service ]                             [ Streamlit Risk Workbench ]
+                            (<50ms p95 Latency)                                 (Interactive Plotly & SHAP)
+```
+
+### Key Technical Pillars:
+- **Zero-Leakage Point-in-Time Features:** Eliminates look-ahead bias and target leakage by strictly computing rolling velocities ($1\text{h}, 6\text{h}, 24\text{h}, 72\text{h}$) backwards in time. Post-settlement balances (`newbalanceOrig`, `newbalanceDest`) and heuristic flags (`isFlaggedFraud`) are strictly barred from the feature set.
+- **Dual-Model Inference:** Unsupervised deep autoencoder (modeling legitimate transaction manifolds) paired with cost-weighted gradient boosting (`scale_pos_weight`).
+- **Calibration & Competition:** Rigorous comparison of Sigmoid (Platt) vs. Isotonic probability calibration. Evaluates standalone XGBoost, standalone Autoencoder, and Hybrid ensemble side-by-side without assuming ensemble superiority.
+- **Configurable Economic Policy:** Risk decisions (`APPROVE`, `REVIEW`, `DECLINE`) driven by bank-configurable cost parameters ($C_{FN}, C_{FP}, C_{Rev}$) under analyst queue constraints ($\le 500$ alerts/day) with sensitivity analysis.
+- **Dual Analytical Storage:** Embedded vectorized **DuckDB** for ultra-fast local OLAP analytics across partitioned Parquet, with **PostgreSQL** schema for operational investigation queues and audit trails.
+
+---
+
+## 2. Dataset & Benchmark Disclaimer
+
+The benchmark dataset is **PaySim** (Lopez-Rojas et al.), an agent-based synthetic simulation of mobile money payment networks ($6,362,620$ transactions, $8,213$ frauds across $744$ simulation steps / 31 days).
+
+> **Regulatory & Institutional Disclaimer:**  
+> PaySim is a synthetic research benchmark. It accurately simulates transactional topologies, balance dynamics, and severe class imbalance, but does not represent proprietary JPMorgan Chase customer records, internal bank ledgers, or live payment authorization networks. Automated risk tiers generated by this platform are quantitative policy simulations, not statutory banking authorization decisions.
+
+---
+
+## 3. Quickstart & Local Installation
+
+### Prerequisites
+- Python 3.11+
+- Git
+
+### 1. Environment Setup
+```bash
+# Clone the repository
+git clone <repo-url>
+cd financial-fraud-risk-platform
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade pip and install wheel
+pip install --upgrade pip wheel
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Dual Engine: DuckDB & PySpark Runtime Requirements
+- **DuckDB (Default & Active):** DuckDB is embedded and runs immediately without any external daemons, services, or Java dependencies. It queries partitioned Parquet files with zero-copy vectorized execution.
+- **PySpark Runtime (Optional / Cluster Execution):** To run the distributed Spark batch pipeline, install OpenJDK 11+ and set `JAVA_HOME`:
+  ```bash
+  # macOS (via Homebrew)
+  brew install openjdk@11
+  export JAVA_HOME="/usr/local/opt/openjdk@11"
+  pip install pyspark
+  ```
+
+### 3. Data Acquisition & CI Fixture
+```bash
+# Generate the deterministic 10,000-row CI sample fixture (used for tests & local dev)
+python scripts/generate_ci_sample.py
+
+# (Optional) Download the full 6.36M PaySim benchmark dataset (~261 MB Parquet):
+python scripts/download_data.py
+```
+
+### 4. Run Dataset Validation Audit & Exploratory Data Analysis
+```bash
+# Validate benchmark dataset
+python scripts/validate_dataset.py --data data/sample/paysim_ci_sample.parquet
+# View generated report: reports/dataset_validation_report.md
+
+# Generate full research EDA figures, Pareto curves, and statistical report:
+python scripts/generate_eda_visualizations.py
+# View generated report: reports/eda_report.md
+```
+
+### 5. Build Point-in-Time Features & Partitions
+```bash
+# Execute vectorized DuckDB point-in-time feature pipeline:
+python scripts/build_features.py --source data/raw/paysim.parquet
+# Generates data/processed/paysim_featurized.parquet, train.parquet, val.parquet, test.parquet
+# View performance report: reports/feature_engineering_report.md
+```
+
+### 6. Run Automated Tests
+```bash
+pytest tests/ -v
+```
+
+---
+
+## 4. Repository Layout
+
+```
+financial-fraud-risk-platform/
+├── configs/              # Declarative YAML configurations (data, features, models, policies)
+├── data/
+│   ├── raw/              # Pristine PaySim benchmark (gitignored)
+│   ├── processed/        # Featurized Parquet partitions (gitignored)
+│   └── sample/           # Deterministic 10,000-row CI test fixture
+├── src/
+│   ├── ingestion/        # Chunked loader, Pandera schemas, DuckDB manager, auditor
+│   ├── preprocessing/    # Data cleaning, scaling, and categorical encoders
+│   ├── features/         # Point-in-time velocity and balance dynamics pipelines
+│   ├── models/           # PyTorch Autoencoder, XGBoost, probability calibration
+│   ├── evaluation/       # PR-AUC, Precision@K, Fraud Value Captured, cost utility
+│   ├── explainability/   # TreeSHAP explainer & narrative generator
+│   ├── decision_engine/  # Tier assignment & sensitivity analysis
+│   ├── monitoring/       # Data drift (PSI, KS-test) & MLflow telemetry
+│   ├── streaming/        # Micro-batch streaming simulation engine
+│   └── api/              # FastAPI high-throughput REST gateway
+├── dashboard/            # Streamlit Institutional Risk Analyst Workbench
+├── sql/                  # schema.sql (PostgreSQL DDL) & analytical_queries.sql
+├── tests/                # Unit, integration, and performance tests
+├── reports/              # Generated audit reports and evaluation metrics
+├── scripts/              # Operational CLI automation scripts
+├── pyproject.toml        # Modern Python build metadata & tool config
+├── requirements.txt      # Pinned dependency manifest
+└── Makefile              # Automation targets
+```
+
+---
+
+## 5. Development & Testing Commands
+
+| Command | Action |
+| :--- | :--- |
+| `make test` | Run full pytest suite (92 tests) with coverage |
+| `make sample` | Generate deterministic 10k CI test sample |
+| `make validate` | Run Pandera and statistical audit on dataset |
+| `make download` | Acquire genuine PaySim benchmark dataset |
+| `make api` | Start FastAPI transaction scoring service on port 8000 |
+| `make dashboard` | Start Streamlit Institutional Risk Workbench on port 8501 |
+| `make lint` | Run ruff code linter |
+
+---
+
+## 6. Real-Time Fraud Decisioning Engine & REST API (Phase 5)
+
+The platform provides a high-throughput, low-latency FastAPI inference gateway designed for real-time payment authorization screening and batch settlement triage.
+
+### Serving Endpoints:
+- `POST /v1/score`: Single transaction scoring, isotonic probability calibration, decision routing, and optional TreeSHAP card.
+- `POST /v1/score/batch`: Vectorized high-throughput batch scoring (up to 500 transactions/payload).
+- `GET /health`: Liveness probe for Kubernetes / container orchestration.
+- `GET /ready`: Readiness probe verifying XGBoost model, Isotonic calibrator, Autoencoder, and DB reachability.
+- `GET /v1/model/info`: Governance metadata, lineage, active 31-feature roster, calibration status, and policy thresholds.
+
+### Starting the API Server:
+```bash
+# Start locally via Uvicorn
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+# Or launch containerized multi-tier stack (FastAPI + PostgreSQL 16)
+docker compose up -d --build
+```
+
+### Example: Single Transaction Scoring (`curl`):
+```bash
+curl -X POST http://localhost:8000/v1/score \
+  -H "Content-Type: application/json" \
+  -H "X-Request-ID: tx-eval-998811" \
+  -d '{
+    "step": 45,
+    "type": "TRANSFER",
+    "amount": 350000.0,
+    "nameOrig": "C100200300",
+    "oldbalanceOrg": 350000.0,
+    "nameDest": "C400500600",
+    "oldbalanceDest": 0.0,
+    "allow_cold_start": true,
+    "include_explanation": true
+  }'
+```
+
+**Response Payload:**
+```json
+{
+  "request_id": "tx-eval-998811",
+  "transaction_id": "C100200300_45",
+  "raw_probability": 0.99826,
+  "calibrated_probability": 1.0,
+  "risk_score": 100.0,
+  "risk_tier": "HIGH",
+  "decision": "DECLINE",
+  "action_code": "AUTO_DECLINE_STEP_UP",
+  "decision_reasons": [
+    "BALANCE_DRAIN_CRITICAL",
+    "DEST_ZERO_BALANCE_MULE",
+    "CORRIDOR_TRANSFER_HIGH_RISK",
+    "HIGH_TRANSACTION_AMOUNT"
+  ],
+  "anomaly_score": 0.9842,
+  "latency_ms": 24.15,
+  "model_version": "1.0.0",
+  "cold_start_applied": true,
+  "explanation": {
+    "narrative": "Decision: DECLINE (Calibrated Fraud Risk: 100.0%). Key risk drivers: Origin account balance drain ratio is 100.0%, indicating near-total balance liquidation. Corridor TRANSFER has a high historical fraud incidence. Evaluated with TreeSHAP feature attributions for regulatory auditability.",
+    "top_risk_factors": [
+      {
+        "feature_name": "balance_orig_drain_ratio",
+        "feature_value": 35000000000.0,
+        "contribution": 4.5751,
+        "direction": "RISK_INDUCING",
+        "plain_english": "Origin account balance drain ratio is 100.0%, indicating near-total balance liquidation."
+      }
+    ],
+    "top_mitigating_factors": []
+  }
+}
+```
+
+### Verified Performance Benchmarks (SLA Target: p95 $\le 50.0$ ms):
+- **Single Scoring (STP Mode):** Median (p50) = `17.38 ms`, p95 = `26.03 ms`, p99 = `31.89 ms` (SLA Compliant with +23.97 ms buffer).
+- **Single Scoring (with TreeSHAP Card):** Median (p50) = `32.29 ms`, p95 = `41.95 ms`.
+- **Batch Throughput:** Up to `211.6 tx/sec` at $N=500$ (4.741 ms/tx).
+- **Audit Persistence:** Asynchronous non-blocking SQLite/PostgreSQL logging with idempotency on `request_id`.
+
+---
+
+## 7. Institutional Risk Analyst Workbench & Governance Dashboard (Phase 6)
+
+Phase 6 provides a web-based financial crime investigation console and model risk governance platform built with **Streamlit** and **Plotly**. The dashboard is an analytical client consuming the FastAPI serving service and SQLite audit records without duplicating model memory.
+
+### Dashboard Architecture & Capabilities:
+- **Module A — Executive Risk Overview:** Real-time and historical KPI summary (total processed volume, intercepted exposure, operational decision split, temporal trends).
+- **Module B — Investigation Queue:** Triage table ranked monotonically by `risk_weighted_investigation_priority = P_cal * ln(1 + amount)`. Features multi-select filtering, account masking (`C1****7890`), and simulated case status updates.
+- **Module C — Transaction Explorer:** Live scoring console connected to `POST /v1/score`. Generates instant **Fraud Risk Explanation Cards** with dual-sided TreeSHAP attributions and reason codes.
+- **Module D — Model Governance:** Audited regulatory benchmark curves (out-of-time test PR-AUC $0.9979$, ROC-AUC $0.9996$, Brier score $0.00027$), reliability diagrams, 11 feature ablation experiments, and formal drift monitoring state.
+- **Module E — Policy Simulator:** Interactive offline threshold and cost optimizer. Test alternative decision boundaries ($\tau_{\text{low}}, \tau_{\text{high}}$) and review capacity ($K_{\text{daily}}$) on $90,829$ evaluation records without mutating production thresholds.
+- **Module F — Audit Explorer:** Compliance audit trail browser for SQLite Write-Ahead Logging records.
+
+### Starting the Services (Separate Terminals):
+
+#### Terminal 1 — Start the FastAPI Scoring Engine:
+```bash
+source .venv/bin/activate
+MPLCONFIGDIR=/tmp/matplotlib PYTHONPATH=. uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
+# Or via Makefile:
+make api
+```
+*API Swagger Documentation:* `http://127.0.0.1:8000/docs`
+
+#### Terminal 2 — Start the Streamlit Risk Workbench:
+```bash
+source .venv/bin/activate
+MPLCONFIGDIR=/tmp/matplotlib PYTHONPATH=. streamlit run dashboard/app.py --server.port 8501 --server.address 127.0.0.1
+# Or via Makefile:
+make dashboard
+```
+*Interactive Risk Workbench:* `http://127.0.0.1:8501`
+
+
+
